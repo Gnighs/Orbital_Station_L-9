@@ -1,5 +1,3 @@
-import { archiveManifest } from "./archive-manifest.js";
-
 const sectionGrid = document.querySelector("#section-grid");
 const documentPanel = document.querySelector("#document-panel");
 const documentList = document.querySelector("#document-list");
@@ -7,6 +5,7 @@ const documentsTitle = document.querySelector("#documents-title");
 const activeSectionKicker = document.querySelector("#active-section-kicker");
 const generationStamp = document.querySelector("#generation-stamp");
 
+const archiveManifest = window.archiveManifest;
 const sections = archiveManifest.sections;
 let activeSectionId = getInitialSectionId();
 
@@ -60,18 +59,18 @@ function renderSections() {
   );
 }
 
-function documentRow(document, section) {
+function documentRow(file, section) {
   const anchor = document.createElement("a");
-  anchor.className = "document-row";
-  anchor.href = document.href;
+  anchor.className = `document-row ${file.status === "wip" ? "wip" : "current"}`;
+  anchor.href = file.href;
   anchor.target = "_blank";
   anchor.rel = "noopener";
 
   anchor.innerHTML = `
-    <span class="document-id">${document.id}</span>
+    <span class="document-id">${file.id}</span>
     <span class="document-main">
-      <strong>${document.title}</strong>
-      <span>${section.title} archive file</span>
+      <strong>${file.title}</strong>
+      <span>${file.statusLabel ?? "Current Archive Copy"}</span>
     </span>
     <span class="document-action">View PDF</span>
   `;

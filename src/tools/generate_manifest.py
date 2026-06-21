@@ -9,6 +9,8 @@ SRC_DIR = SCRIPT_DIR.parent
 PROJECT_ROOT = SRC_DIR.parent
 DOCUMENTS_DIR = PROJECT_ROOT / "documents"
 OUTPUT_PATH = SRC_DIR / "archive-manifest.js"
+ORDER_PATH = DOCUMENTS_DIR / "order.txt"
+METADATA_FILE = "archive.json"
 
 SECTION_DESCRIPTIONS = {
     "languages": "Reference grammars, lexicons, scripts, and linguistic survey material.",
@@ -17,12 +19,7 @@ SECTION_DESCRIPTIONS = {
     "miscellany": "Unsorted transmissions, partial records, and recovered archival fragments.",
 }
 
-MAINTENANCE_LINES = [
-    "INDEX UNDER MAINTENANCE",
-    "CATALOG RECONCILIATION IN PROGRESS",
-    "AWAITING CURATORIAL CLEARANCE",
-    "RECORDS PENDING STATION INTAKE",
-]
+DEFAULT_EMPTY_WARNING = "INDEX UNDER MAINTENANCE"
 
 
 def title_from_slug(value):
@@ -31,7 +28,99 @@ def title_from_slug(value):
 
 
 def title_from_pdf(path):
-    return title_from_slug(path.stem)
+    stem = path.stem
+    for suffix in ("-WIP", "_WIP", " WIP"):
+        if stem.upper().endswith(suffix):
+            stem = stem[:-len(suffix)]
+            break
+
+    return title_from_slug(stem)
+
+
+def document_status(path):
+    stem = path.stem.upper()
+    is_wip = stem.endswith("-WIP") or stem.endswith("_WIP") or stem.endswith(" WIP")
+
+    if is_wip:
+        return {
+            "status": "wip",
+            "statusLabel": "Work In Progress",
+        }
+
+    return {
+        "status": "current",
+        "statusLabel": "Current Archive Copy",
+    }
+
+
+def default_metadata(folder_name):
+    return {
+        "title": title_from_slug(folder_name),
+        "description": SECTION_DESCRIPTIONS.get(
+            folder_name,
+            "Station records filed under a newly opened archive heading.",
+        ),
+        "emptyWarning": DEFAULT_EMPTY_WARNING,
+    }
+
+
+def read_metadata(folder):
+    metadata_path = folder / METADATA_FILE
+    defaults = default_metadata(folder.name)
+
+    if not metadata_path.exists():
+        metadata_path.write_text(
+            json.dumps(defaults, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return defaults
+
+    try:
+        loaded = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"Invalid JSON in {metadata_path}: {error}") from error
+
+    return {
+        "title": str(loaded.get("title") or defaults["title"]),
+        "description": str(loaded.get("description") or defaults["description"]),
+        "emptyWarning": str(loaded.get("emptyWarning") or defaults["emptyWarning"]),
+    }
+
+
+def ordered_folders(folders):
+    by_name = {folder.name: folder for folder in folders}
+    folder_names = set(by_name)
+
+    if not ORDER_PATH.exists():
+        ORDER_PATH.write_text(
+            "\n".join(folder.name for folder in folders) + "\n",
+            encoding="utf-8",
+        )
+        return folders
+
+    ordered_names = [
+        line.strip()
+        for line in ORDER_PATH.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    ]
+    missing_names = [
+        folder.name for folder in folders
+        if folder.name not in ordered_names
+    ]
+
+    if missing_names:
+        ORDER_PATH.write_text(
+            "\n".join([
+                *(name for name in ordered_names if name in folder_names),
+                *missing_names,
+            ]) + "\n",
+            encoding="utf-8",
+        )
+
+    ordered = [by_name.pop(name) for name in ordered_names if name in by_name]
+    ordered.extend(sorted(by_name.values(), key=lambda folder: folder.name.lower()))
+
+    return ordered
 
 
 def station_id(section_name, relative_path):
@@ -60,20 +149,27 @@ def collect_pdfs(section_path):
         (
             path.relative_to(section_path)
             for path in section_path.rglob("*")
-            if path.is_file() and not any(part.startswith(".") for part in path.parts) and path.suffix.lower() == ".pdf"
+            if path.is_file()
+            and not any(part.startswith(".") for part in path.parts)
+            and path.name != METADATA_FILE
+            and path.suffix.lower() == ".pdf"
         ),
         key=lambda path: str(path).lower(),
     )
 
 
 def build_manifest():
-    folders = sorted(
-        path for path in DOCUMENTS_DIR.iterdir()
-        if path.is_dir() and not path.name.startswith(".")
-    )
+    folders = ordered_folders(sorted(
+        (
+            path for path in DOCUMENTS_DIR.iterdir()
+            if path.is_dir() and not path.name.startswith(".")
+        ),
+        key=lambda folder: folder.name.lower(),
+    ))
     sections = []
 
-    for index, folder in enumerate(folders):
+    for folder in folders:
+        metadata = read_metadata(folder)
         pdfs = collect_pdfs(folder)
         documents = [
             {
@@ -82,19 +178,17 @@ def build_manifest():
                 "fileName": relative_path.name,
                 "href": href_for(folder.name, relative_path),
                 "path": f"documents/{folder.name}/{relative_path.as_posix()}",
+                **document_status(relative_path),
             }
             for relative_path in pdfs
         ]
 
         sections.append({
             "id": folder.name,
-            "title": title_from_slug(folder.name),
-            "description": SECTION_DESCRIPTIONS.get(
-                folder.name,
-                "Station records filed under a newly opened archive heading.",
-            ),
+            "title": metadata["title"],
+            "description": metadata["description"],
             "status": "available" if documents else "maintenance",
-            "maintenanceLine": MAINTENANCE_LINES[index % len(MAINTENANCE_LINES)],
+            "maintenanceLine": metadata["emptyWarning"],
             "count": len(documents),
             "documents": documents,
         })
@@ -109,7 +203,7 @@ def build_manifest():
 def main():
     manifest = build_manifest()
     OUTPUT_PATH.write_text(
-        f"export const archiveManifest = {json.dumps(manifest, indent=2)};\n",
+        f"window.archiveManifest = {json.dumps(manifest, indent=2)};\n",
         encoding="utf-8",
     )
     print(f"Generated {OUTPUT_PATH.relative_to(PROJECT_ROOT)} with {len(manifest['sections'])} sections.")

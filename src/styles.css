@@ -343,14 +343,28 @@ h2 {
   outline: none;
 }
 
-.document-row.wip {
+.document-row.in-progress {
   border-color: rgba(215, 169, 68, 0.64);
   background: rgba(44, 34, 14, 0.5);
 }
 
-.document-row.wip:hover,
-.document-row.wip:focus-visible {
+.document-row.in-progress:hover,
+.document-row.in-progress:focus-visible {
   border-color: var(--amber);
+}
+
+.document-row.classified {
+  border-color: rgba(212, 109, 98, 0.72);
+  background: rgba(52, 19, 18, 0.54);
+}
+
+.document-row.classified:hover,
+.document-row.classified:focus-visible {
+  border-color: var(--red);
+}
+
+.document-row.unavailable {
+  cursor: default;
 }
 
 .document-main {
@@ -375,9 +389,14 @@ h2 {
   color: var(--muted);
 }
 
-.document-row.wip .document-main span,
-.document-row.wip .document-action {
+.document-row.in-progress .document-main span,
+.document-row.in-progress .document-action {
   color: var(--amber);
+}
+
+.document-row.classified .document-main span,
+.document-row.classified .document-action {
+  color: var(--red);
 }
 
 .document-action {

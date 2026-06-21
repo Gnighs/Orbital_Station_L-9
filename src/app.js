@@ -60,22 +60,27 @@ function renderSections() {
 }
 
 function documentRow(file, section) {
-  const anchor = document.createElement("a");
-  anchor.className = `document-row ${file.status === "wip" ? "wip" : "current"}`;
-  anchor.href = file.href;
-  anchor.target = "_blank";
-  anchor.rel = "noopener";
+  const row = document.createElement(file.isAvailable ? "a" : "article");
+  row.className = `document-row ${file.className ?? "cleared"} ${file.isAvailable ? "available" : "unavailable"}`;
 
-  anchor.innerHTML = `
+  if (file.isAvailable) {
+    row.href = file.href;
+    row.target = "_blank";
+    row.rel = "noopener";
+  } else {
+    row.setAttribute("aria-disabled", "true");
+  }
+
+  row.innerHTML = `
     <span class="document-id">${file.id}</span>
     <span class="document-main">
       <strong>${file.title}</strong>
       <span>${file.statusLabel ?? "Current Archive Copy"}</span>
     </span>
-    <span class="document-action">View PDF</span>
+    <span class="document-action">${file.actionLabel ?? "View PDF"}</span>
   `;
 
-  return anchor;
+  return row;
 }
 
 function maintenanceNotice(section) {
@@ -83,8 +88,8 @@ function maintenanceNotice(section) {
   article.className = "maintenance-notice";
   article.innerHTML = `
     <span>${section.maintenanceLine}</span>
-    <strong>${section.title} records are not yet available through the public terminal.</strong>
-    <p>No public records are available through this terminal. Index reconstruction is pending curator clearance.</p>
+    <strong>${section.emptyTitle}</strong>
+    <p>${section.emptyMessage}</p>
   `;
   return article;
 }

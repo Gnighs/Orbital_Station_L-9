@@ -1,5 +1,0 @@
-languages
-biology
-cultures
-haptics
-miscellany

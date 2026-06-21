@@ -9,17 +9,30 @@ SRC_DIR = SCRIPT_DIR.parent
 PROJECT_ROOT = SRC_DIR.parent
 DOCUMENTS_DIR = PROJECT_ROOT / "documents"
 OUTPUT_PATH = SRC_DIR / "archive-manifest.js"
-ORDER_PATH = DOCUMENTS_DIR / "order.txt"
-METADATA_FILE = "archive.json"
+INDEXES_PATH = DOCUMENTS_DIR / "indexes.json"
+FILES_CATALOG = "files.json"
 
-SECTION_DESCRIPTIONS = {
-    "languages": "Reference grammars, lexicons, scripts, and linguistic survey material.",
-    "biology": "Xenobiological field reports, anatomical plates, and ecological notes.",
-    "cultures": "Ethnographic dossiers, settlement records, ritual notes, and political briefs.",
-    "miscellany": "Unsorted transmissions, partial records, and recovered archival fragments.",
+VALID_STATUSES = {"Cleared", "InProgress", "Classified"}
+STATUS_DETAILS = {
+    "Cleared": {
+        "className": "cleared",
+        "statusLabel": "Current Archive Copy",
+        "actionLabel": "View PDF",
+    },
+    "InProgress": {
+        "className": "in-progress",
+        "statusLabel": "Work In Progress",
+        "actionLabel": "View PDF",
+    },
+    "Classified": {
+        "className": "classified",
+        "statusLabel": "Classified",
+        "actionLabel": "PDF Unavailable",
+    },
 }
 
 DEFAULT_EMPTY_WARNING = "INDEX UNDER MAINTENANCE"
+DEFAULT_EMPTY_MESSAGE = "No public records are available through this terminal. Index reconstruction is pending curator clearance."
 
 
 def title_from_slug(value):
@@ -27,168 +40,151 @@ def title_from_slug(value):
     return " ".join(word.capitalize() for word in normalized.split())
 
 
-def title_from_pdf(path):
-    stem = path.stem
-    for suffix in ("-WIP", "_WIP", " WIP"):
-        if stem.upper().endswith(suffix):
-            stem = stem[:-len(suffix)]
-            break
-
-    return title_from_slug(stem)
-
-
-def document_status(path):
-    stem = path.stem.upper()
-    is_wip = stem.endswith("-WIP") or stem.endswith("_WIP") or stem.endswith(" WIP")
-
-    if is_wip:
-        return {
-            "status": "wip",
-            "statusLabel": "Work In Progress",
-        }
-
-    return {
-        "status": "current",
-        "statusLabel": "Current Archive Copy",
-    }
-
-
-def default_metadata(folder_name):
-    return {
-        "title": title_from_slug(folder_name),
-        "description": SECTION_DESCRIPTIONS.get(
-            folder_name,
-            "Station records filed under a newly opened archive heading.",
-        ),
-        "emptyWarning": DEFAULT_EMPTY_WARNING,
-    }
-
-
-def read_metadata(folder):
-    metadata_path = folder / METADATA_FILE
-    defaults = default_metadata(folder.name)
-
-    if not metadata_path.exists():
-        metadata_path.write_text(
-            json.dumps(defaults, indent=2) + "\n",
-            encoding="utf-8",
-        )
-        return defaults
+def read_json(path, fallback):
+    if not path.exists():
+        path.write_text(json.dumps(fallback, indent=2) + "\n", encoding="utf-8")
+        return fallback
 
     try:
-        loaded = json.loads(metadata_path.read_text(encoding="utf-8"))
+        return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as error:
-        raise SystemExit(f"Invalid JSON in {metadata_path}: {error}") from error
+        raise SystemExit(f"Invalid JSON in {path}: {error}") from error
 
+
+def default_index(folder):
+    title = title_from_slug(folder.name)
     return {
-        "title": str(loaded.get("title") or defaults["title"]),
-        "description": str(loaded.get("description") or defaults["description"]),
-        "emptyWarning": str(loaded.get("emptyWarning") or defaults["emptyWarning"]),
+        "id": folder.name,
+        "title": title,
+        "description": "Station records filed under a newly opened archive heading.",
+        "emptyWarning": DEFAULT_EMPTY_WARNING,
+        "emptyTitle": f"{title} records are not yet available through the public terminal.",
+        "emptyMessage": DEFAULT_EMPTY_MESSAGE,
     }
 
 
-def ordered_folders(folders):
-    by_name = {folder.name: folder for folder in folders}
-    folder_names = set(by_name)
-
-    if not ORDER_PATH.exists():
-        ORDER_PATH.write_text(
-            "\n".join(folder.name for folder in folders) + "\n",
-            encoding="utf-8",
-        )
-        return folders
-
-    ordered_names = [
-        line.strip()
-        for line in ORDER_PATH.read_text(encoding="utf-8").splitlines()
-        if line.strip() and not line.strip().startswith("#")
-    ]
-    missing_names = [
-        folder.name for folder in folders
-        if folder.name not in ordered_names
-    ]
-
-    if missing_names:
-        ORDER_PATH.write_text(
-            "\n".join([
-                *(name for name in ordered_names if name in folder_names),
-                *missing_names,
-            ]) + "\n",
-            encoding="utf-8",
-        )
-
-    ordered = [by_name.pop(name) for name in ordered_names if name in by_name]
-    ordered.extend(sorted(by_name.values(), key=lambda folder: folder.name.lower()))
-
-    return ordered
-
-
-def station_id(section_name, relative_path):
-    raw = f"{section_name}/{relative_path.with_suffix('')}"
-    clean = []
-    previous_dash = False
-
-    for char in raw:
-        if char.isalnum():
-            clean.append(char.upper())
-            previous_dash = False
-        elif not previous_dash:
-            clean.append("-")
-            previous_dash = True
-
-    return f"L9-{''.join(clean).strip('-')}"
-
-
-def href_for(section_name, relative_path):
-    parts = ["..", "documents", section_name, *relative_path.parts]
-    return "/".join(part if part == ".." else quote(part) for part in parts)
-
-
-def collect_pdfs(section_path):
-    return sorted(
-        (
-            path.relative_to(section_path)
-            for path in section_path.rglob("*")
-            if path.is_file()
-            and not any(part.startswith(".") for part in path.parts)
-            and path.name != METADATA_FILE
-            and path.suffix.lower() == ".pdf"
-        ),
-        key=lambda path: str(path).lower(),
-    )
-
-
-def build_manifest():
-    folders = ordered_folders(sorted(
+def ensure_indexes():
+    folders = sorted(
         (
             path for path in DOCUMENTS_DIR.iterdir()
             if path.is_dir() and not path.name.startswith(".")
         ),
         key=lambda folder: folder.name.lower(),
-    ))
+    )
+
+    if not INDEXES_PATH.exists():
+        indexes = [default_index(folder) for folder in folders]
+        INDEXES_PATH.write_text(json.dumps(indexes, indent=2) + "\n", encoding="utf-8")
+        return indexes
+
+    indexes = read_json(INDEXES_PATH, [])
+    if not isinstance(indexes, list):
+        raise SystemExit(f"{INDEXES_PATH} must contain a JSON list.")
+
+    listed_ids = {
+        str(index.get("id"))
+        for index in indexes
+        if isinstance(index, dict) and index.get("id")
+    }
+    missing_indexes = [
+        default_index(folder)
+        for folder in folders
+        if folder.name not in listed_ids
+    ]
+
+    if missing_indexes:
+        indexes.extend(missing_indexes)
+        INDEXES_PATH.write_text(json.dumps(indexes, indent=2) + "\n", encoding="utf-8")
+
+    return indexes
+
+
+def clean_index(raw_index):
+    if not isinstance(raw_index, dict) or not raw_index.get("id"):
+        raise SystemExit("Every item in documents/indexes.json must be an object with an id.")
+
+    index_id = str(raw_index["id"])
+    title = str(raw_index.get("title") or title_from_slug(index_id))
+
+    return {
+        "id": index_id,
+        "title": title,
+        "description": str(raw_index.get("description") or "Station records filed under a newly opened archive heading."),
+        "emptyWarning": str(raw_index.get("emptyWarning") or DEFAULT_EMPTY_WARNING),
+        "emptyTitle": str(raw_index.get("emptyTitle") or f"{title} records are not yet available through the public terminal."),
+        "emptyMessage": str(raw_index.get("emptyMessage") or DEFAULT_EMPTY_MESSAGE),
+    }
+
+
+def ensure_files_catalog(folder):
+    path = folder / FILES_CATALOG
+    files = read_json(path, [])
+    if not isinstance(files, list):
+        raise SystemExit(f"{path} must contain a JSON list.")
+
+    return files
+
+
+def href_for(index_id, relative_path):
+    parts = ["..", "documents", index_id, *Path(relative_path).parts]
+    return "/".join(part if part == ".." else quote(part) for part in parts)
+
+
+def normalize_file(raw_file, index_id, folder):
+    if not isinstance(raw_file, dict):
+        raise SystemExit(f"Every file item in {folder / FILES_CATALOG} must be an object.")
+
+    title = str(raw_file.get("title") or "").strip()
+    record_id = str(raw_file.get("id") or "").strip()
+    status = str(raw_file.get("status") or "Cleared").strip()
+    relative_path = str(raw_file.get("path") or "").strip()
+
+    if not title:
+        raise SystemExit(f"A file item in {folder / FILES_CATALOG} is missing title.")
+    if not record_id:
+        raise SystemExit(f"File '{title}' in {folder / FILES_CATALOG} is missing id.")
+    if status not in VALID_STATUSES:
+        raise SystemExit(f"File '{title}' in {folder / FILES_CATALOG} has invalid status '{status}'. Use Cleared, InProgress, or Classified.")
+
+    details = STATUS_DETAILS[status]
+    linked_file_exists = bool(relative_path) and (folder / relative_path).is_file()
+    is_available = linked_file_exists and status != "Classified"
+
+    return {
+        "id": record_id,
+        "title": title,
+        "path": f"documents/{index_id}/{relative_path}" if relative_path else "",
+        "href": href_for(index_id, relative_path) if is_available else "",
+        "status": status,
+        "className": details["className"],
+        "statusLabel": details["statusLabel"],
+        "actionLabel": details["actionLabel"] if is_available else "PDF Unavailable",
+        "isAvailable": is_available,
+    }
+
+
+def build_manifest():
     sections = []
 
-    for folder in folders:
-        metadata = read_metadata(folder)
-        pdfs = collect_pdfs(folder)
+    for raw_index in ensure_indexes():
+        index = clean_index(raw_index)
+        folder = DOCUMENTS_DIR / index["id"]
+        folder.mkdir(exist_ok=True)
+        (folder / "files").mkdir(exist_ok=True)
+        raw_files = ensure_files_catalog(folder)
         documents = [
-            {
-                "id": station_id(folder.name, relative_path),
-                "title": title_from_pdf(relative_path),
-                "fileName": relative_path.name,
-                "href": href_for(folder.name, relative_path),
-                "path": f"documents/{folder.name}/{relative_path.as_posix()}",
-                **document_status(relative_path),
-            }
-            for relative_path in pdfs
+            normalize_file(raw_file, index["id"], folder)
+            for raw_file in raw_files
         ]
 
         sections.append({
-            "id": folder.name,
-            "title": metadata["title"],
-            "description": metadata["description"],
+            "id": index["id"],
+            "title": index["title"],
+            "description": index["description"],
             "status": "available" if documents else "maintenance",
-            "maintenanceLine": metadata["emptyWarning"],
+            "maintenanceLine": index["emptyWarning"],
+            "emptyTitle": index["emptyTitle"],
+            "emptyMessage": index["emptyMessage"],
             "count": len(documents),
             "documents": documents,
         })

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "languages",
+    "title": "Languages",
+    "description": "Reference grammars, lexicons, scripts, and linguistic survey material.",
+    "emptyWarning": "INDEX UNDER MAINTENANCE",
+    "emptyTitle": "Languages records are not yet available through the public terminal.",
+    "emptyMessage": "No public records are available through this terminal. Index reconstruction is pending curator clearance."
+  },
+  {
+    "id": "biology",
+    "title": "Biology",
+    "description": "Xenobiological field reports, anatomical plates, and ecological notes.",
+    "emptyWarning": "INDEX UNDER MAINTENANCE",
+    "emptyTitle": "Biology records are not yet available through the public terminal.",
+    "emptyMessage": "No public records are available through this terminal. Index reconstruction is pending curator clearance."
+  },
+  {
+    "id": "cultures",
+    "title": "Cultures",
+    "description": "Ethnographic dossiers, settlement records, ritual notes, and political briefs.",
+    "emptyWarning": "INDEX UNDER MAINTENANCE",
+    "emptyTitle": "Cultures records are not yet available through the public terminal.",
+    "emptyMessage": "No public records are available through this terminal. Index reconstruction is pending curator clearance."
+  },
+  {
+    "id": "haptics",
+    "title": "Haptics",
+    "description": "Station records filed under a newly opened archive heading.",
+    "emptyWarning": "INDEX UNDER MAINTENANCE",
+    "emptyTitle": "Haptics records are not yet available through the public terminal.",
+    "emptyMessage": "No public records are available through this terminal. Index reconstruction is pending curator clearance."
+  },
+  {
+    "id": "miscellany",
+    "title": "Miscellany",
+    "description": "Unsorted transmissions, partial records, and recovered archival fragments.",
+    "emptyWarning": "INDEX UNDER MAINTENANCE",
+    "emptyTitle": "Miscellany records are not yet available through the public terminal.",
+    "emptyMessage": "No public records are available through this terminal. Index reconstruction is pending curator clearance."
+  }
+]

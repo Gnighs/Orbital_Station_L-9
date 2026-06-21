@@ -1,6 +1,6 @@
 window.archiveManifest = {
   "station": "Orbital Archive Station L-9",
-  "generatedAt": "2026-06-21T13:31:41.976821+00:00",
+  "generatedAt": "2026-06-21T13:42:56.852467+00:00",
   "sections": [
     {
       "id": "languages",
@@ -11,11 +11,11 @@ window.archiveManifest = {
       "count": 2,
       "documents": [
         {
-          "id": "L9-LANGUAGES-KUPINA-HALA-GRAMMAR-WIP",
-          "title": "Kupina Hala Grammar",
-          "fileName": "Kupina_Hala_Grammar-WIP.pdf",
-          "href": "../documents/languages/Kupina_Hala_Grammar-WIP.pdf",
-          "path": "documents/languages/Kupina_Hala_Grammar-WIP.pdf",
+          "id": "L9-LANGUAGES-KUPINA-HALA-REFERENCE-GRAMMAR-WIP",
+          "title": "Kupina Hala Reference Grammar",
+          "fileName": "Kupina_Hala_Reference_Grammar-WIP.pdf",
+          "href": "../documents/languages/Kupina_Hala_Reference_Grammar-WIP.pdf",
+          "path": "documents/languages/Kupina_Hala_Reference_Grammar-WIP.pdf",
           "status": "wip",
           "statusLabel": "Work In Progress"
         },
@@ -51,7 +51,7 @@ window.archiveManifest = {
     {
       "id": "haptics",
       "title": "Haptics",
-      "description": "Station records filed under a newly opened archive heading.",
+      "description": "Research in haptic wave manipulation.",
       "status": "maintenance",
       "maintenanceLine": "INDEX UNDER MAINTENANCE",
       "count": 0,

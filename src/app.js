@@ -84,7 +84,7 @@ function maintenanceNotice(section) {
   article.innerHTML = `
     <span>${section.maintenanceLine}</span>
     <strong>${section.title} records are not yet available through the public terminal.</strong>
-    <p>When PDF files are added to this folder, the next index scan will open this section automatically.</p>
+    <p>No public records are available through this terminal. Index reconstruction is pending curator clearance.</p>
   `;
   return article;
 }

@@ -170,6 +170,50 @@ h2 {
   max-width: 100%;
 }
 
+.status-summary {
+  display: grid;
+  gap: 10px;
+}
+
+.summary-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-self: start;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: rgba(7, 17, 15, 0.72);
+}
+
+.summary-switch button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.summary-switch button:last-child {
+  border-right: 0;
+}
+
+.summary-switch button:hover,
+.summary-switch button:focus-visible,
+.summary-switch button[aria-pressed="true"] {
+  background: rgba(22, 36, 31, 0.95);
+  color: var(--text);
+  outline: none;
+}
+
+.summary-switch button[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1px rgba(110, 207, 176, 0.28);
+}
+
 .status-panel {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -198,6 +242,34 @@ h2 {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+.status-detail {
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.status-panel .cleared strong {
+  color: var(--line-bright);
+}
+
+.status-panel .in-progress strong {
+  color: var(--amber);
+}
+
+.status-panel .classified strong {
+  color: var(--red);
+}
+
+.status-panel .in-progress {
+  background: rgba(44, 34, 14, 0.22);
+}
+
+.status-panel .classified {
+  background: rgba(52, 19, 18, 0.24);
+}
+
 
 .section-heading {
   display: flex;
@@ -543,6 +615,16 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .summary-switch {
+    width: 100%;
+  }
+
+  .summary-switch button {
+    min-width: 0;
+    padding: 0 10px;
+    font-size: 0.68rem;
+  }
+
   .status-panel > div {
     gap: 4px;
     min-width: 0;
@@ -559,6 +641,10 @@ h2 {
   .status-panel strong {
     font-size: 0.9rem;
     overflow-wrap: anywhere;
+  }
+
+  .status-detail {
+    font-size: 0.68rem;
   }
 
   .section-heading {
@@ -585,7 +671,6 @@ h2 {
     gap: 6px 10px;
     min-height: 0;
     padding: 12px;
-    scroll-margin-top: 10px;
     scroll-snap-align: start;
   }
 

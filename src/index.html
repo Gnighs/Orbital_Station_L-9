@@ -33,19 +33,12 @@
     </section>
 
     <main class="archive-shell">
-      <section class="status-panel" aria-label="Station status">
-        <div>
-          <span class="status-label">Archival Integrity</span>
-          <strong>Moderate</strong>
+      <section class="status-summary" aria-label="Archive summary">
+        <div class="summary-switch" aria-label="Summary view">
+          <button type="button" aria-pressed="true" data-summary-view="station">Station Status</button>
+          <button type="button" aria-pressed="false" data-summary-view="files">File Report</button>
         </div>
-        <div>
-          <span class="status-label">Clearance</span>
-          <strong>Public-ish</strong>
-        </div>
-        <div>
-          <span class="status-label">Interface Language</span>
-          <strong>Senate Standard Shasvin</strong>
-        </div>
+        <div id="status-panel" class="status-panel"></div>
       </section>
 
       <section aria-labelledby="sections-title">

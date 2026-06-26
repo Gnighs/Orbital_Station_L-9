@@ -101,6 +101,28 @@ function legacyPath(parts) {
   return null;
 }
 
+function decodePathSegment(segment) {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return "";
+  }
+}
+
+function pathParts() {
+  const parts = window.location.pathname
+    .replace(/\/+$/, "")
+    .split("/")
+    .filter(Boolean)
+    .map(decodePathSegment)
+    .filter(Boolean);
+
+  if (parts[0] === "src" && (!parts[1] || parts[1] === "index.html")) return [];
+  if (parts[parts.length - 1] === "index.html") return parts.slice(0, -1);
+  if (parts[0] === "browse") return parts.slice(1);
+  return parts;
+}
+
 function resolvePath(path) {
   let node = rootCatalog;
   const ancestors = [];
@@ -117,10 +139,11 @@ function resolvePath(path) {
 }
 
 function getRoute() {
-  const parts = normalizeHash(window.location.hash).split("/").filter(Boolean);
+  const hashParts = normalizeHash(window.location.hash).split("/").filter(Boolean);
+  const parts = hashParts.length ? hashParts : pathParts();
   if (parts.length === 0) return { node: rootCatalog, ancestors: [], path: [] };
 
-  const path = parts[0] === "browse" ? parts.slice(1) : legacyPath(parts);
+  const path = parts[0] === "browse" ? parts.slice(1) : legacyPath(parts) ?? parts;
   const candidate = path ?? [];
   for (let length = candidate.length; length >= 0; length -= 1) {
     const route = resolvePath(candidate.slice(0, length));
@@ -129,12 +152,21 @@ function getRoute() {
   return { node: rootCatalog, ancestors: [], path: [] };
 }
 
-function pathHash(path) {
-  return path.length ? `browse/${path.join("/")}` : "";
+function routeUrl(path) {
+  return path.length ? `/${path.map(encodeURIComponent).join("/")}` : "/";
+}
+
+function syncCleanUrl(route) {
+  const target = routeUrl(route.path);
+  if (window.location.hash || window.location.pathname !== target) {
+    window.history.replaceState(null, "", target);
+  }
 }
 
 function navigate(path) {
-  window.location.hash = pathHash(path);
+  window.history.pushState(null, "", routeUrl(path));
+  render();
+  if (mobileViewport.matches) scrollActiveViewIntoPlace();
 }
 
 function itemStatus(item) {
@@ -386,6 +418,7 @@ function scrollActiveViewIntoPlace() {
 
 function render() {
   const route = getRoute();
+  syncCleanUrl(route);
   renderSummary();
   renderBreadcrumbs(route);
   renderDirectory(route);
@@ -405,4 +438,5 @@ Array.from(summaryButtons).forEach((button) => {
   });
 });
 window.addEventListener("hashchange", handleHashChange);
+window.addEventListener("popstate", handleHashChange);
 render();

@@ -260,7 +260,7 @@ def load_files(index_dir):
 
 def href_for(path_parts, relative_path):
     parts = ["documents", *path_parts, *Path(relative_path).parts]
-    return "/".join(quote(part) for part in parts)
+    return "/" + "/".join(quote(part) for part in parts)
 
 
 def normalize_file(
@@ -333,7 +333,6 @@ def build_index(
     used_file_archive_ids,
 ):
     item_dir.mkdir(parents=True, exist_ok=True)
-    (item_dir / "files").mkdir(exist_ok=True)
     layout, raw_files = load_files(item_dir)
     documents = [
         normalize_file(

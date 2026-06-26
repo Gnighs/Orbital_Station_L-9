@@ -368,7 +368,11 @@ function renderDocuments(route) {
 }
 
 function scrollActiveViewIntoPlace() {
-  const target = documentPanel.hidden ? directorySection : documentPanel;
+  const target = navigationBar.hidden
+    ? documentPanel.hidden
+      ? directorySection
+      : documentPanel
+    : navigationBar;
   if (!target) return;
   window.requestAnimationFrame(() => {
     const targetTop = window.scrollY + target.getBoundingClientRect().top - 10;

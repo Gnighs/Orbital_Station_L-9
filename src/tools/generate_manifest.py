@@ -259,8 +259,8 @@ def load_files(index_dir):
 
 
 def href_for(path_parts, relative_path):
-    parts = ["..", "documents", *path_parts, *Path(relative_path).parts]
-    return "/".join(part if part == ".." else quote(part) for part in parts)
+    parts = ["documents", *path_parts, *Path(relative_path).parts]
+    return "/".join(quote(part) for part in parts)
 
 
 def normalize_file(

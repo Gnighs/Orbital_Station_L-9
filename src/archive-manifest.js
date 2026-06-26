@@ -1,6 +1,6 @@
 window.archiveManifest = {
   "station": "Orbital Archive Station L-9",
-  "generatedAt": "2026-06-26T14:07:15.671167+00:00",
+  "generatedAt": "2026-06-26T14:19:21.274716+00:00",
   "root": {
     "id": "archive",
     "archiveId": "L9",
@@ -98,7 +98,7 @@ window.archiveManifest = {
                     "archiveId": "L9-COLO-AR29G-LANG-882-J",
                     "title": "Shasvin Reference Grammar",
                     "path": "documents/colonial-records/AR-29G/languages/files/Shasvin_Reference_Grammar.pdf",
-                    "href": "../documents/colonial-records/AR-29G/languages/files/Shasvin_Reference_Grammar.pdf",
+                    "href": "documents/colonial-records/AR-29G/languages/files/Shasvin_Reference_Grammar.pdf",
                     "status": "Cleared",
                     "className": "cleared",
                     "statusLabel": "Current Archive Copy",
@@ -145,7 +145,7 @@ window.archiveManifest = {
                     "archiveId": "L9-COLO-AR29G-BIOL-311-T",
                     "title": "<i>Thalassogigantia insuliformis</i>",
                     "path": "documents/colonial-records/AR-29G/biology/files/Tanayu_Monograph.pdf",
-                    "href": "../documents/colonial-records/AR-29G/biology/files/Tanayu_Monograph.pdf",
+                    "href": "documents/colonial-records/AR-29G/biology/files/Tanayu_Monograph.pdf",
                     "status": "Cleared",
                     "className": "cleared",
                     "statusLabel": "Current Archive Copy",

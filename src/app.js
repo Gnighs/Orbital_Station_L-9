@@ -16,6 +16,7 @@ const backButton = document.querySelector("#back-button");
 const archiveManifest = window.archiveManifest;
 const rootCatalog = archiveManifest.root;
 const mobileViewport = window.matchMedia("(max-width: 640px)");
+const localFileProtocol = window.location.protocol === "file:";
 let activeSummaryView = "station";
 
 const stationStatusItems = [
@@ -110,6 +111,8 @@ function decodePathSegment(segment) {
 }
 
 function pathParts() {
+  if (localFileProtocol) return [];
+
   const parts = window.location.pathname
     .replace(/\/+$/, "")
     .split("/")
@@ -156,7 +159,13 @@ function routeUrl(path) {
   return path.length ? `/${path.map(encodeURIComponent).join("/")}` : "/";
 }
 
+function routeHash(path) {
+  return path.length ? path.map(encodeURIComponent).join("/") : "";
+}
+
 function syncCleanUrl(route) {
+  if (localFileProtocol) return;
+
   const target = routeUrl(route.path);
   if (window.location.hash || window.location.pathname !== target) {
     window.history.replaceState(null, "", target);
@@ -164,6 +173,11 @@ function syncCleanUrl(route) {
 }
 
 function navigate(path) {
+  if (localFileProtocol) {
+    window.location.hash = routeHash(path);
+    return;
+  }
+
   window.history.pushState(null, "", routeUrl(path));
   render();
   if (mobileViewport.matches) scrollActiveViewIntoPlace();
@@ -187,6 +201,12 @@ function itemStatus(item) {
 function itemAction(item) {
   if (!item.isAccessible) return "Records Unavailable";
   return item.kind === "index" ? "Open Index" : "Open Directory";
+}
+
+function fileHref(file) {
+  if (!localFileProtocol) return file.href;
+  const prefix = window.location.pathname.includes("/src/") ? "../" : "./";
+  return `${prefix}${file.path}`;
 }
 
 function createCatalogCard(item, path) {
@@ -325,7 +345,7 @@ function documentRow(file) {
   const row = document.createElement(file.isAvailable ? "a" : "article");
   row.className = `document-row ${file.className} ${file.isAvailable ? "available" : "unavailable"}`;
   if (file.isAvailable) {
-    row.href = file.href;
+    row.href = fileHref(file);
     row.target = "_blank";
     row.rel = "noopener";
   } else {
@@ -346,7 +366,7 @@ function documentCard(file) {
   const card = document.createElement(file.isAvailable ? "a" : "article");
   card.className = `section-card document-card ${file.className}`.trim();
   if (file.isAvailable) {
-    card.href = file.href;
+    card.href = fileHref(file);
     card.target = "_blank";
     card.rel = "noopener";
   } else {

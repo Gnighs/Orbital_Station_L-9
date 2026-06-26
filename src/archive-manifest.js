@@ -1,6 +1,6 @@
 window.archiveManifest = {
   "station": "Orbital Archive Station L-9",
-  "generatedAt": "2026-06-26T14:35:18.049352+00:00",
+  "generatedAt": "2026-06-26T14:52:16.269243+00:00",
   "root": {
     "id": "archive",
     "archiveId": "L9",
@@ -159,7 +159,7 @@ window.archiveManifest = {
                 "code": "CULT",
                 "title": "Cultures",
                 "kind": "index",
-                "status": "Cleared",
+                "status": "Classified",
                 "description": "Ethnographic dossiers, settlement records, ritual notes, and political briefs.",
                 "kicker": "",
                 "countLabel": "",
@@ -169,11 +169,11 @@ window.archiveManifest = {
                 "emptyMessage": "No public records are available through this terminal. Index reconstruction is pending curator clearance.",
                 "unavailableMessage": "Classified",
                 "archiveId": "L9-COLO-AR29G-CULT",
-                "className": "cleared",
-                "isAccessible": true,
+                "className": "classified",
+                "isAccessible": false,
                 "layout": "list",
                 "count": 0,
-                "availability": "maintenance",
+                "availability": "classified",
                 "documents": []
               }
             ]
